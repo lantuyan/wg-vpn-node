@@ -1,0 +1,3 @@
+# The node agent's only dependencies (settings parsing); everything else is stdlib.
+pydantic==2.10.4
+pydantic-settings==2.7.1

@@ -1,0 +1,6 @@
+# node state: wg keys, cached desired state (preshared keys), counters
+data/
+# WGVPN_NODE_SECRET lives here
+.env
+__pycache__/
+*.py[cod]
