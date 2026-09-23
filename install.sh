@@ -52,6 +52,14 @@ main() {
 
   # ---- packages ---------------------------------------------------------------
   export DEBIAN_FRONTEND=noninteractive
+  # A fresh VPS often runs apt (cloud-init, unattended-upgrades) for its first
+  # minutes; installing now would fail on the dpkg lock, so wait for it.
+  for (( i = 0; i < 120; i++ )); do
+    pgrep -x 'apt|apt-get|dpkg|unattended-upgr' >/dev/null || break
+    (( i == 0 )) && log "Waiting for another apt/dpkg process to finish (fresh VPS updating itself)"
+    sleep 5
+  done
+  pgrep -x 'apt|apt-get|dpkg|unattended-upgr' >/dev/null && die "apt/dpkg is still busy after 10 minutes -- re-run this command later"
   if ! command -v docker >/dev/null 2>&1 || ! docker compose version >/dev/null 2>&1; then
     log "Installing Docker Engine + compose plugin (get.docker.com)"
     command -v curl >/dev/null 2>&1 || { apt-get update -qq && apt-get install -y -qq curl ca-certificates >/dev/null; }
