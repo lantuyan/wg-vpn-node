@@ -254,6 +254,14 @@ class NodeAgent:
         self.cache["counters"] = counters
         self._save()
 
+    def stop(self) -> None:
+        """On shutdown: count the traffic since the last collect, which would
+        otherwise vanish with wg0's counters. Starts from the cache on disk
+        (always consistent: atomic writes), since the signal may have
+        interrupted a collect halfway."""
+        self.cache = load_cache(self.cache_path)
+        self.collect()
+
     # -- central calls ----------------------------------------------------
     def register(self) -> None:
         if not self._interface_ready:
@@ -386,7 +394,13 @@ def main() -> None:
         client=CentralClient(settings.central_url, settings.node_id, settings.node_secret),
         cache_path=settings.data_dir / CACHE_FILE,
     )
-    agent.run_forever()
+    try:
+        agent.run_forever()
+    finally:
+        try:
+            agent.stop()
+        except Exception:  # noqa: BLE001 - shutting down anyway
+            logger.exception("could not count the last traffic before exit")
 
 
 if __name__ == "__main__":
